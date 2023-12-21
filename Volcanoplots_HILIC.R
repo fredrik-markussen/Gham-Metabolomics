@@ -48,7 +48,7 @@ norm <- apply(qc, 2, median, na.rm = TRUE) #calculates the median for each compo
 met.sc <- df.t
 met.sc[,4:ncol(met.sc)] <- sweep(df.t[, 4:ncol(met.sc)], 2, norm, FUN = "/") #sweep across all columns, 2 indicates columns
 
-
+d
 
 
 met.sc <- scale(sqrt(met.sc[,4:ncol(met.sc)]), center = F, scale = T)
