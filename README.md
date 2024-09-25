@@ -1,7 +1,7 @@
 Metabolomics Analysis of HILIC and RPLC Data
 ================
 Fredrik A.F Markussen
-2024-09-23
+2024-09-25
 
 - [1. Introduction](#1-introduction)
   - [Workflow Overview](#workflow-overview)
@@ -12,6 +12,8 @@ Fredrik A.F Markussen
   - [Grouping A1 and A2 -\> EAR](#grouping-a1-and-a2---ear)
   - [sPLS-DA euthermic groups](#spls-da-euthermic-groups-1)
 - [6. Enrichment plots](#6-enrichment-plots)
+- [7. Metabolite spesific plots](#7-metabolite-spesific-plots)
+- [7. Interpretation and descussion](#7-interpretation-and-descussion)
 
 # 1. Introduction
 
@@ -7296,8 +7298,16 @@ p3 #plot the enriched pathways ()
 
 ``` r
 #
+
+#What are the metabolites driving the enrichment:
+Enrichment.hits <-mSet[["analSet"]][["ora.hits"]]
+
+library(tidyr)
+a_Enrichment.hits_df <- tibble::enframe(Enrichment.hits, name = "Pathway", value = "Compounds") %>%
+  unnest(Compounds)
+
 #clean:
-rm(list=setdiff(ls(), c("RPLC.final", "RPLC.DB.match", "HILIC.final", "HILIC.DB.match", "p3")))
+rm(list=setdiff(ls(), c("RPLC.final", "RPLC.DB.match", "HILIC.final", "HILIC.DB.match", "p3", "a_Enrichment.hits_df")))
 ```
 
 ``` r
@@ -7380,12 +7390,15 @@ p4 <-  b_enrich.data %>%
         axis.text.x = element_text(angle = 40, hjust = 1) # Rotate x-axis labels here
   )
 
-p4    
-```
 
-![](fig/unnamed-chunk-496-1.png)<!-- -->
+#What are the metabolites driving the enrichment:
 
-``` r
+Enrichment.hits <-mSet[["analSet"]][["ora.hits"]]
+b_Enrichment.hits_df <- tibble::enframe(Enrichment.hits, name = "Pathway", value = "Compounds") %>%
+  unnest(Compounds) 
+
+
+
 #combine p3 and p4 using patchwork
 library(patchwork)
 p_sh <- p3 + p4 + plot_layout(ncol = 2)
@@ -7393,16 +7406,134 @@ p_sh <- p3 + p4 + plot_layout(ncol = 2)
 p_sh
 ```
 
-![](fig/unnamed-chunk-496-2.png)<!-- -->
+![](fig/unnamed-chunk-496-1.png)<!-- -->
 
 ``` r
-# Save the plots
-library(svglite)
-
-#svglite::svglite("./figures/HILIC ShortHib/Enriched_Pathways.svg", width = 10, height = 15)
-#print(p_sh)
-#dev.off()
-
-
-#rm(list=setdiff(ls(), c("b_enrich.data", "p4", "p3")))
+#clean:
+rm(list=setdiff(ls(), c("RPLC.final", "RPLC.DB.match", "HILIC.final", "HILIC.DB.match", "a_Enrichment.hits_df", "b_Enrichment.hits_df")))
 ```
+
+# 7. Metabolite spesific plots
+
+Tryptophan metabolism and Vitamin B6 metabolism are Identified here as
+being imortant in regulation of both torpor and the interbout euthermia.
+We can extract those metabolites and investigate them further.
+
+``` r
+#Preprocess RPLC.final and HILIC.final
+nRPLC.final <- RPLC.final
+nHILIC.final <- HILIC.final
+
+qc <- nRPLC.final[nRPLC.final$group == "qc", 3:ncol(nRPLC.final)] #extracts qc grpup
+norm <- apply(qc, 2, median, na.rm = TRUE) #calculates the median for each compound
+
+# Apply QC normalization factor to each compound
+met.sc <- nRPLC.final
+met.sc[,3:ncol(met.sc)] <- sweep(nRPLC.final[, 3:ncol(met.sc)], 2, norm, FUN = "/") #sweep across all columns, 2 indicates columns
+# Apply sqrt transformation centering and scaling
+met.sc <- scale(sqrt(met.sc[,3:ncol(met.sc)]), center = T, scale = T)
+
+#Keep group and sample information but cbind the normalized data
+nRPLC.final <- cbind(nRPLC.final[,1:2], met.sc)
+
+
+#HILIC
+qc <- nHILIC.final[nHILIC.final$group == "qc", 3:ncol(nHILIC.final)] #extracts qc grpup
+norm <- apply(qc, 2, median, na.rm = TRUE) #calculates the median for each compound
+
+# Apply QC normalization factor to each compound
+met.sc <- nHILIC.final
+met.sc[,3:ncol(met.sc)] <- sweep(nHILIC.final[, 3:ncol(met.sc)], 2, norm, FUN = "/") #sweep across all columns, 2 indicates columns
+# Apply sqrt transformation centering and scaling
+met.sc <- scale(sqrt(met.sc[,3:ncol(met.sc)]), center = T, scale = T)
+
+#Keep group and sample information but cbind the normalized data
+nHILIC.final <- cbind(nHILIC.final[,1:2], met.sc)
+
+#Remove QC7 in sample column to match rows
+nRPLC.final <- nRPLC.final[!nRPLC.final$sample %in% "QC7",]
+
+#Merge the two dataframes for plotting of metabolites (Dont use for statistical analyis). Duplicates are to be merged by mean. Keep group column for plotting.
+
+head(nRPLC.final)
+
+#merge the data frames
+long_RPLC <- nRPLC.final %>%
+  pivot_longer(-c(group, sample), names_to = "Feature", values_to = "mean_ab")
+long_HILIC <- nHILIC.final %>%
+  pivot_longer(-c(group, sample), names_to = "Feature", values_to = "mean_ab")
+
+long_RPLC_HILIC <- full_join(long_RPLC, long_HILIC, by = c("sample", "group", "Feature"))
+
+long_RPLC_HILIC <- long_RPLC_HILIC %>%
+  mutate(mean_ab = rowMeans(cbind(mean_ab.x, mean_ab.y), na.rm = TRUE)) %>%
+  dplyr::select(group, Feature, mean_ab) 
+
+
+#get all tryptophan and vitamin B6 metabolites into a list from either a_Enrichment.hits_df or b_Enrichment.hits_df
+tryptophan <- bind_rows(a_Enrichment.hits_df, b_Enrichment.hits_df) %>%
+  filter(str_detect(Pathway, regex("Tryptophan Metabolism|Vitamin B6 Metabolism", ignore_case = TRUE)))%>%
+  pull(Compounds)
+
+
+tryptophan_df <- data.frame(Match = tryptophan, stringsAsFactors = FALSE)
+
+# Perform a left join with RPLC.DB.match to get the correct names
+tryptophan_corrected <- tryptophan_df %>%
+  left_join(RPLC.DB.match, by = "Match") %>%
+  pull(Query)  # Extract the correct names from the Query column
+
+color <- c("#D95F02", "#7570B3", "#1B9E77", "#E7298A", "#66A61E", 
+                 "#E6AB02", "#A6761D", "#666666", "#FFB3AB", "#80B1D3")
+
+
+box1 <-long_RPLC_HILIC%>%
+  filter(str_trim(str_to_lower(Feature)) %in% str_trim(str_to_lower(tryptophan_corrected))) %>%
+  ggplot(aes(x = group, y = mean_ab, color = Feature)) +
+  stat_summary(fun = mean, geom = "point", size = 4, position = position_dodge(width = 0.3)) + # Add points for means
+  stat_summary(fun = mean, geom = "line", aes(group = Feature), position = position_dodge(width = 0.3)) + # Add lines connecting means
+  stat_summary(fun.data = "mean_se", geom = "errorbar", position = position_dodge(width = 0.3)) + # 95% CI
+  scale_x_discrete(limits = c("qc", 'IBE2', 'ENT', "A1", "A2", "IBE1")) +
+  scale_color_manual(values = color) +  # Custom color palette
+  theme_bw()
+
+box1
+```
+
+![](fig/unnamed-chunk-497-1.png)<!-- -->
+
+``` r
+#Clean:
+rm(list=setdiff(ls(), c("RPLC.final", "RPLC.DB.match", "HILIC.final", "HILIC.DB.match", "a_Enrichment.hits_df", "b_Enrichment.hits_df")))
+```
+
+# 7. Interpretation and descussion
+
+Here, metabolomics analysis has successfully integrated HILIC and RPLC
+methodologies to capture a broad spectrum of metabolites. The data
+processing and subsequent statistical analysis allowed us to identify
+key metabolites that differentiate physiological states such as torpor
+and euthermia. Pathway enrichment further highlighted significant
+metabolic shifts, offering insights into the biological mechanisms
+underpinning these states.
+
+Tryptophan metabolism seem higly differentially regulated during torpor
+and Interbout arousal. Futher study of the tryptophan metabolism
+pathways indicate that the main catabolic pathway of tryptophan has been
+shunted towads producing kynurenic caid and xanthurenic acid. This is
+likely due to decrease effeciency of Kynurninase (KYNU), the main enzyme
+catabolizing kynyrenine towads quinolinic acid and downstream NAD+
+synthesis. The reactions catalysing the conversion from Kynurenine are
+all vitamin B6 dependent. Here, we see that vitamin B6 levels shows
+signs of depletion during torpor. Interestingly, kynurenine
+aminotransferase (KAT), the enzyme catalysing the reaxtions to KA and
+XA, is also vitamin B6 dependent. However it has ben previously shown
+that KAT is less impacted by vitamin B6 depletion than KYNU, explaining
+the accumulation of KA and XA in torpor.
+
+The reson fo the vit B6 depleation remains unknown, but it is likely
+that the vit B6 is being used for other metabolic processes. Here, we
+hypothesise that the vit B6 is being used as a ROS scavanger during
+topror causing its eventual depleation. However futher work is needed to
+confirm this hypothesis and would involve targeted panels evaluating the
+true serum levels of vit B6, tryptophan metabolism, and ROS levels.
