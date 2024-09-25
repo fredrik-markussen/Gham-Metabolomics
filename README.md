@@ -4,16 +4,12 @@ Fredrik A.F Markussen
 2024-09-25
 
 - [1. Introduction](#1-introduction)
-  - [Workflow Overview](#workflow-overview)
-  - [RPLC Data Wrangling](#rplc-data-wrangling)
 - [3. RPLC and HILIC vulcano plots](#3-rplc-and-hilic-vulcano-plots)
 - [4. HILIC Data Analysis](#4-hilic-data-analysis)
 - [5. RPLC Data Analysis](#5-rplc-data-analysis)
-  - [Grouping A1 and A2 -\> EAR](#grouping-a1-and-a2---ear)
-  - [sPLS-DA euthermic groups](#spls-da-euthermic-groups-1)
 - [6. Enrichment plots](#6-enrichment-plots)
 - [7. Metabolite spesific plots](#7-metabolite-spesific-plots)
-- [7. Interpretation and descussion](#7-interpretation-and-descussion)
+- [8. Interpretation and descussion](#8-interpretation-and-descussion)
 
 # 1. Introduction
 
@@ -7507,33 +7503,55 @@ box1
 rm(list=setdiff(ls(), c("RPLC.final", "RPLC.DB.match", "HILIC.final", "HILIC.DB.match", "a_Enrichment.hits_df", "b_Enrichment.hits_df")))
 ```
 
-# 7. Interpretation and descussion
+# 8. Interpretation and descussion
 
-Here, metabolomics analysis has successfully integrated HILIC and RPLC
-methodologies to capture a broad spectrum of metabolites. The data
-processing and subsequent statistical analysis allowed us to identify
-key metabolites that differentiate physiological states such as torpor
-and euthermia. Pathway enrichment further highlighted significant
-metabolic shifts, offering insights into the biological mechanisms
-underpinning these states.
+To summarise the main findings, the integration of hydrophilic
+interaction liquid chromatography (HILIC) and reversed-phase liquid
+chromatography (RPLC) was employed and seems effective in capturing a
+wide range of metabolites, though improvements in metabolite
+identification and database matching could be further worked on. The
+combination of these techniques allows for the separation of both polar
+and non-polar metabolites, allowing us the best possible conditions for
+metabolite discovery and hypothesis generation.
 
-Tryptophan metabolism seem higly differentially regulated during torpor
-and Interbout arousal. Futher study of the tryptophan metabolism
-pathways indicate that the main catabolic pathway of tryptophan has been
-shunted towads producing kynurenic caid and xanthurenic acid. This is
-likely due to decrease effeciency of Kynurninase (KYNU), the main enzyme
-catabolizing kynyrenine towads quinolinic acid and downstream NAD+
-synthesis. The reactions catalysing the conversion from Kynurenine are
-all vitamin B6 dependent. Here, we see that vitamin B6 levels shows
-signs of depletion during torpor. Interestingly, kynurenine
-aminotransferase (KAT), the enzyme catalysing the reaxtions to KA and
-XA, is also vitamin B6 dependent. However it has ben previously shown
-that KAT is less impacted by vitamin B6 depletion than KYNU, explaining
-the accumulation of KA and XA in torpor.
+One of the significant findings of this analysis was the differential
+regulation of tryptophan metabolism, particularly the catabolic pathway
+leading to the production of kynurenic acid (KA) and xanthurenic acid
+(XA) during torpor. Analysing the metabolites available in the data set,
+we see that the main catabolic pathways of tryptophan is here shifted
+compared to a “normal” physiological state. This shift is likely
+attributed to a reduced efficiency of the enzyme kynureninase (KYNU),
+which is responsible for converting kynurenine into quinolinic acid, a
+precursor for NAD+ synthesis. The activity of KYNU, along with other
+enzymes in this pathway, is heavily reliant on vitamin B6, specifically
+its active form, pyridoxal 5’-phosphate (PLP) (Oxenkrug, 2013; ,
+Oxenkrug et al., 2013). During torpor, signs of vitamin B6 depletion
+were observed, characterized by decreased levels of pyridoxal and
+increased accumulation of 4-pyridoxic acid, which may explain the
+observed increase in KA and XA levels (Ueland et al., 2015; , Oxenkrug,
+2013).
 
-The reson fo the vit B6 depleation remains unknown, but it is likely
-that the vit B6 is being used for other metabolic processes. Here, we
-hypothesise that the vit B6 is being used as a ROS scavanger during
-topror causing its eventual depleation. However futher work is needed to
-confirm this hypothesis and would involve targeted panels evaluating the
-true serum levels of vit B6, tryptophan metabolism, and ROS levels.
+Interestingly, despite the noted vitamin B6 depletion, kynurenine
+aminotransferase (KAT)—the Vit B6 dependent enzyme responsible for
+producing KA and XA—remains functional. Previous studies indicate that
+KAT is less susceptible to vitamin B6 deficiency compared to KYNU, which
+aligns with our findings of elevated KA and XA levels during torpor
+(Oxenkrug et al., 2013). The underlying cause of vitamin B6 depletion
+during this physiological state remains uncertain; however, it is
+hypothesized that vitamin B6 may be redirected towards other metabolic
+processes, such as the scavenging of reactive oxygen species (ROS)
+during torpor, which could account for its depletion (Oxenkrug, 2013).
+Further research is warranted to investigate this hypothesis, including
+targeted analyses to measure serum levels of vitamin B6, the activity of
+enzymes within the tryptophan metabolic pathway, and ROS levels during
+both torpor and arousal (Ueland et al., 2015; , Oxenkrug, 2013).
+
+To conclude, HILIC and RPLC of hibernating plasma shows extreme changes
+in the metabolome during TA-cycling. A pathway consistently being used
+for group separation in our experiment is tryptophan metabolism. Based
+on the alterations in this pathway at the end of torpor, we hypothesise
+that low grade metabolism causes the continuous slow accumulation of
+ROS, which is scavenged continuously until the antioxidant and coenzyme
+vitamin B6 is depleted causing complication in system wide metabolism.
+This metabolic imbalance surpasses tolerance thresholds which initiates
+arousal in order to restore metabolic balance.
