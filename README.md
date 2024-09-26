@@ -1,9 +1,10 @@
 Metabolomics Analysis of HILIC and RPLC Data
 ================
 Fredrik A.F Markussen
-2024-09-25
+2024-09-26
 
 - [1. Introduction](#1-introduction)
+- [2. Data wrangling](#2-data-wrangling)
 - [3. RPLC and HILIC vulcano plots](#3-rplc-and-hilic-vulcano-plots)
 - [4. HILIC Data Analysis](#4-hilic-data-analysis)
 - [5. RPLC Data Analysis](#5-rplc-data-analysis)
@@ -30,40 +31,41 @@ molecular ion, but many of these features can be redundant due to
 isotopes, adducts, and in-source fragments, complicating the analysis
 (Chong et al., 2018; Beirnaert et al., 2019). Furthermore,
 distinguishing meaningful biological signals from noise and instrument
-artifacts is a complex task that requires sophisticated data processing
-techniques. Accurate identification of metabolites is also a challenge,
-as current databases are often incomplete, leading to many detected
-features remaining unidentified (Puccio et al., 2021; Chen et al.,
-2022). Therefore, effective data processing, feature filtering, and
-identification are critical for ensuring the reliability of metabolomic
-analyses (Rao et al., 2021; Deng et al., 2023).
+artifacts is a complex task that requires care and attention. Accurate
+identification of metabolites is also a challenge, as current databases
+are often incomplete, leading to many detected features remaining
+unidentified (Puccio et al., 2021; Chen et al., 2022). Therefore,
+effective data processing, feature filtering, and identification are
+challenges in the workflow of metabolomic analyses (Rao et al., 2021;
+Deng et al., 2023).
 
-In this study, we employed two complementary chromatographic methods:
-Hydrophilic Interaction Liquid Chromatography (HILIC) and reverse-phase
-liquid chromatography (RPLC). HILIC biases towards the separation of
-polar compounds such as amino acids and organic acids, while RPLC biases
-towords non-polar metabolites like lipids and steroids (Xie et al.,
-2021; Marco-Ramell et al., 2018). This dual chromatography strategy was
-chosen for metabolite coverage, allowing for a more comprehensive
-analysis of both hydrophilic and hydrophobic species within the
-metabolome. Each method produces distinct datasets that require
-independent processing and analysis before integration for biological
-interpretation (Wieder et al., 2021; Chong et al., 2018).
+Considering these challenges, we employed two complementary
+chromatographic methods: Hydrophilic Interaction Liquid Chromatography
+(HILIC) and reverse-phase liquid chromatography (RPLC). HILIC biases
+towards the separation of polar compounds such as amino acids and
+organic acids, while RPLC biases towords non-polar metabolites like
+lipids and steroids (Xie et al., 2021; Marco-Ramell et al., 2018). This
+dual chromatography strategy was chosen for metabolite coverage,
+allowing for a more comprehensive analysis of both hydrophilic and
+hydrophobic species within the metabolome. Each method produces distinct
+datasets that require independent processing and analysis before
+integration for biological interpretation (Wieder et al., 2021; Chong et
+al., 2018).
 
-Here, we conduct an anlysis of two datasets generated from HILIC and
-RPLC chromatography. The datasets are first preprocessed to remove
-low-quality features and identify metabolites with high confidence. They
-are then sculpted in to dataframes suitable for work in R, and analyzed
-separately. The analysis includes exploratory data analysis,
-visualization, and statistical testing to identify differentially
-abundant metabolites between experimental groups.
+In this report, e conduct an anlysis of two datasets generated from
+HILIC and RPLC chromatography. The datasets are first preprocessed to
+remove low-quality features and identify metabolites with high
+confidence. They are then sculpted in to dataframes suitable for work in
+R, and analyzed separately. The analysis includes exploratory data
+analysis, visualization, and statistical testing to identify
+differentially abundant metabolites between experimental groups.
 
 We use sPLS-DA, a supervised machine learning method, to identify the
 most important features that discriminate between groups. This method is
 particularly useful for high-dimensional data, as it can identify the
 most relevant features for classification or regression tasks.
 
-After we have seleced the most important fretures for group
+After we have selected the most important features for group
 classification in each data set, a joint pathway enrichment analysis is
 done to associate differentially regulated metabolites with known
 metabolic pathways. To do this we use MetaboAnalyst toolkits to map
@@ -73,6 +75,33 @@ understanding of how metabolic changes correspond to physiological or
 pathological states, thereby offering a robust approach for hypothesis
 generation and mechanistic insights to the changes in the hibernating
 metabolome.
+
+## Experimental overview
+
+The samples analysed in this study are plasma samples derived Golden
+hamsters in different stages of torpor-arousal cycling: IBE1; one hour
+after rewarming from torpor, IBE2; 12 hours after rewarming from torpor,
+ENT; entry into torpor (core body temperature 25C), A1; Early arousal
+0.5C from torpid temperature baseline, A2; early arousal 3C from torpid
+temperature baseline. This arrangement of groups yields samples from the
+4 corners of the torpor arousal cycle.
+
+The A1 samples are the particularity interesting, as they represent the
+early stages of arousal, where the hypothetical metabolic shift from
+torpor is the most pronounced. This group can also be regarded as the
+end of torpor, since only 5-10 minutes have passed since the animal
+started rewarming from the torpid baseline temperature. A2 contrasts A1
+by being further into the arousal process, yet before muscle shivering
+starts, thus providing insights in to the metabolic effects of rewarming
+itself.
+
+The overall aim of the study is to identify metabolites that are
+differentially abundant between the different stages of the
+torpor-arousal cycle. This information can be used to identify metabolic
+pathways that are altered during TA-cycling, and to gain insights about
+the physiological changes that occur during this process. This insight
+can be used to generate testable hypotheses of why the phenomenon of
+torpor arousal cycling occurs in hibernation.
 
 ## Workflow Overview
 
@@ -92,18 +121,17 @@ where:
 
 A key decision in untargeted metabolomics analysis is determining which
 data to include in the final analysis. Retaining too many features can
-introduce issues related to fitting models to compounds that are not
-well-identified, reducing the interpretability of the model. Conversely,
-removing too many features can lead to a loss of valuable information.
-In this analysis, we decided to work with MSI classes A to D, excluding
+introduce issues related to overfitting and fitting models to compounds
+that are not well-identified, reducing the interpretability of the
+model. Conversely, removing too many features can lead to a loss of
+valuable information, leading to misinterpretation of the data. In this
+analysis, we decided to work with MSI classes A to D, excluding
 compounds at the D level that could not be identified by any identifier
-database (HMDB, KEGG, PubChem, mzCloud, etc).
+database (HMDB, KEGG, PubChem, mzCloud, etc).After applying this
+filtering criterion, the HILIC compounds were reduced from 991 to 249,
+and the RPLC compounds were similarly reduced from 1209 to 230.
 
-After applying this filtering criterion, the HILIC compounds were
-reduced from 991 to 249, and the RPLC compounds were similarly reduced
-from 1209 to 230.
-
-An analysis of the non-identifieable data was also performed, but is not
+An analysis of the non-identifiable data was also performed, but is not
 included in this report. To summarize, similar founding were made as
 with the identified metabolites. However, interpreting the feature
 selection could not be made due to the lack of identification and
@@ -112,6 +140,21 @@ massive widespread shift in the metabolome is observed in the
 hibernating state, with a very large number of features changing in
 abundance.
 
+Our main tool for feature selection is sparse Partial Least Squares
+Discriminant Analysis (sPLS-DA). This method is a supervised machine
+learning technique that identifies the most important features for group
+classification. The sPLS-DA method is particularly useful for
+high-dimensional data, as it can identify the most relevant features for
+classification or regression tasks. The method is also robust to
+multicollinearity, which is common in metabolomics data due to the high
+degree of correlation between features. While this is our main tool,
+feature selection is also aided in a filtering step where we remove
+features with low variance, as these are unlikely to be informative for
+group classification. This step uses the top 20% of the PCA loadings and
+all significantly differentially regulated metabolites between groups
+determined by volcano plot analysis.
+
+The analysis of the identified metabolites is presented in this report.
 The analysis follows these steps:
 
 1.  **HILIC and RPLC dataset wrangling**, including formatting and
@@ -123,7 +166,14 @@ The analysis follows these steps:
 6.  **Compound-specific plotting**.
 7.  **Interpretation of results**.
 
-\#2. Data wrangling \## HILIC Data Wrangling
+# 2. Data wrangling
+
+Here, .csv files exported from Compund discoverer 3 are read into R and
+processed to remove low-quality features and identify metabolites with
+high confidence. The data are then formattet into dataframes suitable
+for work with exploratory statistical methods.
+
+## HILIC Data Wrangling
 
 Clean script FM
 
